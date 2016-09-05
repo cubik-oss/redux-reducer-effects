@@ -1,0 +1,17 @@
+{
+  "name": "redux-reducer-effects",
+  "private": true,
+  "scripts": {
+    "compileTypescript": "mkdir -p ./target-typescript && tsc",
+    "compileBrowserify": "mkdir -p ./target && browserify ./target-typescript/main.js --outfile ./target/main.js",
+    "copyHtml": "cp ./src/index.html ./target/index.html",
+    "compile": "npm run compileTypescript && npm run compileBrowserify && npm run copyHtml"
+  },
+  "dependencies": {
+    "@types/whatwg-fetch": "0.0.30",
+    "browserify": "^13.1.0",
+    "monapt": "^0.5.4",
+    "typescript": "^2.1.0-dev.20160905",
+    "typings": "^1.3.3"
+  }
+}
