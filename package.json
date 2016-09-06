@@ -8,9 +8,11 @@
     "compile": "npm run compileTypescript && npm run compileBrowserify && npm run copyHtml"
   },
   "dependencies": {
+    "@types/redux": "^3.5.29",
     "@types/whatwg-fetch": "0.0.30",
     "browserify": "^13.1.0",
     "monapt": "^0.5.4",
+    "redux": "^3.6.0",
     "typescript": "^2.1.0-dev.20160905",
     "typings": "^1.3.3"
   }
