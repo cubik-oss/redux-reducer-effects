@@ -13,6 +13,6 @@
         ]
     },
     "files": [
-        "./src/main.ts"
+        "./src/example.ts"
     ]
 }
