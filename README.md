@@ -25,5 +25,5 @@ npm run compile
 ```
 
 ## Prior art
-* [redux-loop](https://github.com/redux-loop/redux-loop): great project. I'm keen to integrate with this, although it's API is quite far behind Elm's latest, and it's not currently type safe. https://github.com/redux-loop/redux-loop/issues/87
+* [redux-loop](https://github.com/redux-loop/redux-loop): great project. I'm keen to integrate with this, although its API is quite far behind Elm's latest, and it's not currently type safe. https://github.com/redux-loop/redux-loop/issues/87
 * [The Elm Architecture](https://github.com/evancz/elm-architecture-tutorial)
