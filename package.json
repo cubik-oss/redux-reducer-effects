@@ -1,17 +1,20 @@
 {
   "name": "redux-reducer-effects",
-  "private": true,
+  "version": "0.0.1",
   "scripts": {
     "compileTypescript": "mkdir -p ./target-typescript && tsc",
-    "compileBrowserify": "mkdir -p ./target && browserify ./target-typescript/main.js --outfile ./target/main.js",
+    "compileBrowserify": "mkdir -p ./target && browserify ./target-typescript/example.js --outfile ./target/example.js",
     "copyHtml": "cp ./src/index.html ./target/index.html",
     "tslint": "tslint --exclude 'node_modules/**' '**/*.ts'",
-    "compile": "npm run tslint && npm run compileTypescript && npm run compileBrowserify && npm run copyHtml"
+    "clean": "rm -rf ./target ./target-typescript",
+    "compile": "npm run clean && npm run tslint && npm run compileTypescript && npm run compileBrowserify && npm run copyHtml"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.34",
     "@types/redux": "^3.5.29",
     "@types/whatwg-fetch": "0.0.30",
     "browserify": "^13.1.0",
+    "lodash": "^4.15.0",
     "monapt": "^0.5.4",
     "redux": "^3.6.0",
     "tslint": "^3.15.1",
