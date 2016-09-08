@@ -42,7 +42,7 @@ const createSubject = <T>() => {
     return { onNext, subscribe }
 }
 
-export const install = (originalCreateStore: StoreCreator) => {
+const enhance = (originalCreateStore: StoreCreator) => {
     return <S>(reducer: EnhancedReducer<S>, initialState: S, enhancer?: StoreEnhancer<S>) => {
         // This subject represents a stream of cmds coming from
         // the reducer
@@ -64,6 +64,7 @@ export const install = (originalCreateStore: StoreCreator) => {
         return store;
     }
 }
+export default enhance;
 
 type TaskError<X> = { success: false, value: X }
 type TaskSuccess<A> = { success: true, value: A }

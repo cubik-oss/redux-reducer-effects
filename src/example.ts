@@ -1,9 +1,9 @@
 import {Option,Some,None} from 'monapt';
-import {combineReducers, install, Cmd, performTask, httpGet} from './enhancer';
+import enhance, {combineReducers, Cmd, performTask, httpGet} from './enhancer';
 import {createStore} from 'redux';
 
 // createStore(reducer, install())
-const enhancedCreateStore = install(createStore);
+const enhancedCreateStore = enhance(createStore);
 
 const create = <T>(t: T): T => t;
 
