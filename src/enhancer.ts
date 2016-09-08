@@ -69,6 +69,7 @@ export const performTask = <SuccessAction extends Action, ErrorAction extends Ac
     return () => task().then(createSuccessAction, createErrorAction)
 }
 
+// http://package.elm-lang.org/packages/evancz/elm-http/latest/Http#get
 export const httpGet = <Success>(decoder: (x: any) => Success, url: string, fetchOptions?: RequestInit): Task<Success, Error> => (
     () => (
         fetch(url, fetchOptions)
