@@ -74,7 +74,7 @@ export const httpGet = <Success>(decoder: (x: any) => Success, url: string, fetc
     () => (
         fetch(url, fetchOptions)
             .then(response => response.json())
-			.then(decoder)
+            .then(decoder)
     )
 );
 
