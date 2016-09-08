@@ -55,13 +55,13 @@ export const install = <S>(): Enhancer<S> => {
     }
 }
 
-// TODO: ErrorMsg is really thrown, not typed!
-type Task<SuccessMsg, ErrorMsg> = () => Promise<SuccessMsg | ErrorMsg>
+type Task<SuccessResult, ErrorResult> = () => Promise<SuccessResult | ErrorResult>
 type CreateActionFn<Msg, Action> = (msg: Msg) => Action;
-export const performTask = <SuccessAction extends Action, ErrorAction extends Action, SuccessMsg, ErrorMsg>(
-    createSuccessAction: CreateActionFn<SuccessMsg, SuccessAction>,
-    createErrorAction: CreateActionFn<ErrorMsg, ErrorAction>,
-	task: Task<SuccessMsg, ErrorMsg>
+// http://package.elm-lang.org/packages/elm-lang/core/latest/Task#perform
+export const performTask = <SuccessAction extends Action, ErrorAction extends Action, SuccessResult, ErrorResult>(
+    createSuccessAction: CreateActionFn<SuccessResult, SuccessAction>,
+    createErrorAction: CreateActionFn<ErrorResult, ErrorAction>,
+	task: Task<SuccessResult, ErrorResult>
 ): Cmd<SuccessAction | ErrorAction> => {
     return () => task().then(createSuccessAction, createErrorAction)
 }
