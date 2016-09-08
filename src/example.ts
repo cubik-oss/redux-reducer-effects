@@ -31,14 +31,18 @@ const createFetchErrorAction = (result: string): FetchErrorAction => ({
     type: ActionTypes.FetchError,
     result: create<Failure>({ success: false, reason: result })
 });
-type Action = FetchAction | FetchSuccessAction | FetchErrorAction | { type: ActionTypes.Test };
+type FetchResponseAction = FetchSuccessAction | FetchErrorAction;
+type Action = FetchAction | FetchResponseAction | { type: ActionTypes.Test };
 
 const decodeGifUrl = (response: any): string => response.data.image_url;
-const getRandomGif = (topic: string): Cmd<FetchSuccessAction | FetchErrorAction> => {
+
+const getRandomGif = (topic: string): Cmd<FetchResponseAction> => {
     const url = "https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=" + topic;
-    return performTask(
-        createFetchSuccessAction,
+    // Msg generic can't be inferred, unlike Elm?
+    return performTask<string, string, FetchResponseAction>(
         createFetchErrorAction,
+        // createFetchErrorAction,
+        createFetchSuccessAction,
         httpGet(decodeGifUrl, url)
     )
 }
