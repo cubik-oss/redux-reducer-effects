@@ -1,5 +1,5 @@
 import {flatten as flattenOptions, Some, Option} from 'monapt';
-import {StoreEnhancer, StoreCreator, Reducer, Action, Store} from 'redux';
+import {StoreEnhancer, StoreCreator, Reducer, Action} from 'redux';
 import {flattenDeep as flattenDeepArrays} from 'lodash';
 
 // Tasks represent a job which results in success | error
@@ -26,9 +26,6 @@ type EnhancedReducersMapObject = {
     [key: string]: EnhancedReducer<any>;
 }
 
-type EnhancedStoreCreator<S> = <Msg>(reducer: EnhancedReducer<S>, initialState: S, enhancer?: StoreEnhancer<S>) => Store<S>
-type Enhancer<S> = (originalStoreCreator: StoreCreator) => EnhancedStoreCreator<S>;
-
 const liftReducer = <Msg, S>(reducer: EnhancedReducer<S>, callback: (cmd: Cmd<Msg>) => void): Reducer<S> => {
     return (state: S, msg: Msg) => {
         const [newState, maybeCommand] = reducer(state, msg);
@@ -45,28 +42,26 @@ const createSubject = <T>() => {
     return { onNext, subscribe }
 }
 
-export const install = <S>(): Enhancer<S> => {
-    return (originalCreateStore): EnhancedStoreCreator<S> => {
-        return <Msg extends Action>(reducer: EnhancedReducer<S>, initialState: S, enhancer?: StoreEnhancer<S>) => {
-            // This subject represents a stream of cmds coming from
-            // the reducer
-            const subject = createSubject<Cmd<Msg>>();
-            const liftedReducer = liftReducer(reducer, subject.onNext)
-            const store = originalCreateStore(liftedReducer, initialState, enhancer)
-            // Close the loop by running the command and dispatching to the
-            // store
-            // TODO: if list, etc.
-            subject.subscribe(cmd => cmd().then(msg => {
-                if (Array.isArray(msg)) {
-                    const msgs: Msg[] = msg;
-                    flattenDeepArrays(msgs).forEach(store.dispatch)
-                } else {
-                    store.dispatch(msg)
-                }
-            }));
+export const install = (originalCreateStore: StoreCreator) => {
+    return <S>(reducer: EnhancedReducer<S>, initialState: S, enhancer?: StoreEnhancer<S>) => {
+        // This subject represents a stream of cmds coming from
+        // the reducer
+        const subject = createSubject<Cmd<Action>>();
+        const liftedReducer = liftReducer(reducer, subject.onNext)
+        const store = originalCreateStore(liftedReducer, initialState, enhancer)
+        // Close the loop by running the command and dispatching to the
+        // store
+        // TODO: if list, etc.
+        subject.subscribe(cmd => cmd().then(msg => {
+            if (Array.isArray(msg)) {
+                const msgs: Action[] = msg;
+                flattenDeepArrays(msgs).forEach(store.dispatch)
+            } else {
+                store.dispatch(msg)
+            }
+        }));
 
-            return store;
-        }
+        return store;
     }
 }
 
@@ -102,10 +97,10 @@ export const httpGet = <Value>(decoder: (x: any) => Value, url: string, fetchOpt
     )
 );
 
+type Dictionary<T> = { [index: string]: T; }
 // https://github.com/redux-loop/redux-loop/blob/c708d98a9960d9efe3accc3acbc8f86c940941fa/modules/combineReducers.js
-// TODO: Fix any
-export const combineReducers = (reducerMap: EnhancedReducersMapObject): EnhancedReducer<any> => {
-    return <Msg>(state: any, msg: Msg): [any, Option<Cmd<Msg>>] => {
+export const combineReducers = <S>(reducerMap: EnhancedReducersMapObject): EnhancedReducer<S> => {
+    return <Msg>(state: Dictionary<any>, msg: Msg): [S, Option<Cmd<Msg>>] => {
         type Accumulator = {
             state: any,
             commands: Option<Cmd<Msg>>[]
@@ -113,6 +108,7 @@ export const combineReducers = (reducerMap: EnhancedReducersMapObject): Enhanced
         };
         const model = Object.keys(reducerMap).reduce<Accumulator>((acc, key) => {
             const reducer = reducerMap[key];
+            // We lose type safety here because state is a record
             const previousStateForKey = state[key];
             const nextResultForKey = reducer(previousStateForKey, msg);
             const [nextStateForKey, maybeCommand] = nextResultForKey;

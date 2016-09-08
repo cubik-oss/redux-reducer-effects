@@ -3,33 +3,26 @@ import {combineReducers, install, Cmd, performTask, httpGet} from './enhancer';
 import {createStore} from 'redux';
 
 // createStore(reducer, install())
-const enhancedCreateStore = install<State>()(createStore);
+const enhancedCreateStore = install(createStore);
 
 const create = <T>(t: T): T => t;
 
-export interface Success<T> {
-    success: true;
-    value: T;
-}
+export type Success<A> = { success: true; value: A; }
+export type Error<X> = { success: false; value: X }
 
-export interface Failure {
-    success: false;
-    reason: string;
-}
-
-type Result<T> = Success<T> | Failure;
+type Result<X, A> = Error<X> | Success<A>;
 
 enum ActionTypes { Fetch, FetchSuccess, FetchError, Test };
 type FetchAction = { type: ActionTypes.Fetch };
-type FetchSuccessAction = { type: ActionTypes.FetchSuccess, result: Result<string> };
+type FetchSuccessAction = { type: ActionTypes.FetchSuccess, result: Result<string, string> };
 const createFetchSuccessAction = (result: string): FetchSuccessAction => ({
     type: ActionTypes.FetchSuccess,
     result: create<Success<string>>({ success: true, value: result })
 });
-type FetchErrorAction = { type: ActionTypes.FetchError, result: Result<string> };
+type FetchErrorAction = { type: ActionTypes.FetchError, result: Result<string, string> };
 const createFetchErrorAction = (result: string): FetchErrorAction => ({
     type: ActionTypes.FetchError,
-    result: create<Failure>({ success: false, reason: result })
+    result: create<Error<string>>({ success: false, value: result })
 });
 type FetchResponseAction = FetchSuccessAction | FetchErrorAction;
 type Action = FetchAction | FetchResponseAction | { type: ActionTypes.Test };
@@ -49,7 +42,7 @@ const getRandomGif = (topic: string): Cmd<FetchResponseAction> => {
 
 type MainState = {
     status: 'not started' | 'pending' | 'success' | 'error',
-    result: Option<Result<string>>
+    result: Option<Result<string, string>>
 }
 type State = {
     main: MainState
@@ -74,7 +67,7 @@ const initialState: State = {
     }
 };
 
-const store = enhancedCreateStore(combineReducers({ main: reducer }), initialState);
+const store = enhancedCreateStore(combineReducers<State>({ main: reducer }), initialState);
 
 const rootEl = document.getElementById('root');
 store.subscribe(() => {
@@ -86,7 +79,7 @@ Result success: ${state.main.result
     .map(result => result.success)
     .getOrElse(() => false)}
 Result success value/failure reason: ${state.main.result
-    .map(result => result.success ? JSON.stringify(result.value, null, '\t') : result.reason)
+    .map(result => result.success ? JSON.stringify(result.value, null, '\t') : result.value)
     .getOrElse(() => '')}
 </pre>`;
 });
