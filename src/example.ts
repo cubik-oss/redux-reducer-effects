@@ -55,15 +55,9 @@ const reducer = (state: MainState, action: Action): [MainState, Option<Cmd<Actio
         case ActionTypes.Fetch:
             return [{ status: 'pending', result: None }, new Some(getRandomGif('food'))];
         case ActionTypes.FetchSuccess:
-            return [{ status: 'success', result: new Some(action.result) }, new Some(
-                Cmd.batch([Cmd.batch([() => Promise.resolve({ type: ActionTypes.Test })])])
-            )]
+            return [{ status: 'success', result: new Some(action.result) }, None]
         case ActionTypes.FetchError:
             return [{ status: 'error', result: new Some(action.result) }, None]
-        // withDefault
-        case ActionTypes.Test:
-            console.log('it worked')
-            return [state, None]
         default:
             return [state, None];
     }
