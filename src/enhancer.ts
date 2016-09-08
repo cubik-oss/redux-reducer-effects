@@ -2,6 +2,9 @@ import {flatten as flattenOptions, Some, Option} from 'monapt';
 import {StoreEnhancer, StoreCreator, Reducer, Action, Store} from 'redux';
 import {flattenDeep as flattenDeepArrays} from 'lodash';
 
+// Tasks represent a job which results in success | error
+// Cmd represents a job which results in an action
+
 // http://guide.elm-lang.org/effect_managers/batching.html
 // http://package.elm-lang.org/packages/elm-lang/core/latest/Platform-Cmd#batch
 // https://github.com/redux-loop/redux-loop/pull/69/files#diff-cb03f5868274bee764df3e04d233383dR35
