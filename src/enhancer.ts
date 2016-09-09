@@ -28,12 +28,6 @@ function createSubject <T>() {
     return { onNext, subscribe, map }
 }
 
-type TaskError<X> = { success: false, value: X }
-type TaskSuccess<A> = { success: true, value: A }
-
-export const createTaskError = <X>(x: X): TaskError<X> => ({ success: false, value: x })
-export const createTaskSuccess = <A>(a: A): TaskSuccess<A> => ({ success: true, value: a })
-
 export type TaskRunner<Msg> = <Task>(task: Task) => Promise<Msg>;
 
 const enhance = (originalCreateStore: StoreCreator) => {

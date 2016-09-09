@@ -1,5 +1,5 @@
 import {Option,Some,None} from 'monapt';
-import enhance, {combineReducers, TaskRunner, createTaskSuccess, createTaskError} from './enhancer';
+import enhance, {combineReducers, TaskRunner} from './enhancer';
 import {createStore} from 'redux';
 
 // createStore(reducer, enhance)
@@ -19,24 +19,30 @@ const createRunTaskDoneAction = (): RunTaskDoneAction => (
 )
 type FetchAction = { type: ActionTypes.Fetch };
 type FetchSuccessAction = { type: ActionTypes.FetchSuccess, result: Result<string, string> };
-const createFetchSuccessAction = (result: string): FetchSuccessAction => ({
+const createFetchSuccessAction = (result: Success<string>): FetchSuccessAction => ({
     type: ActionTypes.FetchSuccess,
-    result: create<Success<string>>({ success: true, value: result })
+    result
 });
 type FetchErrorAction = { type: ActionTypes.FetchError, result: Result<string, string> };
-const createFetchErrorAction = (result: string): FetchErrorAction => ({
+const createFetchErrorAction = (result: Error<string>): FetchErrorAction => ({
     type: ActionTypes.FetchError,
-    result: create<Error<string>>({ success: false, value: result })
+    result
 });
 type FetchResponseAction = FetchSuccessAction | FetchErrorAction;
 type Action = FetchAction | FetchResponseAction | { type: ActionTypes.Test } | { type: ActionTypes.RunTask } | RunTaskDoneAction;
+
+type TaskError<X> = { success: false, value: X }
+type TaskSuccess<A> = { success: true, value: A }
+
+export const createTaskError = <X>(x: X): TaskError<X> => ({ success: false, value: x })
+export const createTaskSuccess = <A>(a: A): TaskSuccess<A> => ({ success: true, value: a })
 
 enum TaskTypes { GetRandomGif, RunTask }
 type GetRandomGifTask = {
     type: TaskTypes.GetRandomGif,
     topic: string,
-    onFail: (x: string) => FetchErrorAction,
-    onSuccess: (a: string) => FetchSuccessAction,
+    onFail: (x: TaskError<string>) => FetchErrorAction,
+    onSuccess: (a: TaskSuccess<string>) => FetchSuccessAction,
 }
 type RunTaskTask = { type: TaskTypes.RunTask }
 type Task = GetRandomGifTask | RunTaskTask
@@ -57,8 +63,8 @@ const reducer = (state: MainState, action: Action): [MainState, Option<Task[]>] 
                 create<GetRandomGifTask>({
                     type: TaskTypes.GetRandomGif,
                     topic: 'food',
-                    onFail: x => createFetchErrorAction(x),
-                    onSuccess: a => createFetchSuccessAction(a),
+                    onFail: createFetchErrorAction,
+                    onSuccess: createFetchSuccessAction,
                 })
             ])];
         case ActionTypes.FetchSuccess:
@@ -106,8 +112,8 @@ const myTaskRunner: TaskRunner<Action> = <X, A>(task: Task): Promise<Action> => 
                 .catch(createTaskError)
                 .then(result => (
                     result.success
-                        ? task.onFail(result.value)
-                        : task.onSuccess(result.value)
+                        ? task.onSuccess(result)
+                        : task.onFail(result)
                 ))
         case TaskTypes.RunTask:
             return Promise.resolve(createRunTaskDoneAction())
