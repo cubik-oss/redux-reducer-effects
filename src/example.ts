@@ -1,8 +1,8 @@
 import {Option,Some,None} from 'monapt';
-import enhance, {combineReducers, Cmd, performTask, httpGet, TaskRunner, Task, TaskResult, createTaskSuccess, createTaskError} from './enhancer';
+import enhance, {combineReducers, TaskRunner, createTaskSuccess, createTaskError} from './enhancer';
 import {createStore} from 'redux';
 
-// createStore(reducer, install())
+// createStore(reducer, enhance)
 const enhancedCreateStore = enhance(createStore);
 
 const create = <T>(t: T): T => t;
@@ -12,10 +12,10 @@ export type Error<X> = { success: false; value: X }
 
 type Result<X, A> = Error<X> | Success<A>;
 
-enum ActionTypes { Fetch, FetchSuccess, FetchError, Test, RunConstant, RunConstantDone };
-type RunConstantDoneAction = { type: ActionTypes.RunConstantDone };
-const createRunConstantDoneAction = (): RunConstantDoneAction => (
-    { type: ActionTypes.RunConstantDone }
+enum ActionTypes { Fetch, FetchSuccess, FetchError, Test, RunTask, RunTaskDone };
+type RunTaskDoneAction = { type: ActionTypes.RunTaskDone };
+const createRunTaskDoneAction = (): RunTaskDoneAction => (
+    { type: ActionTypes.RunTaskDone }
 )
 type FetchAction = { type: ActionTypes.Fetch };
 type FetchSuccessAction = { type: ActionTypes.FetchSuccess, result: Result<string, string> };
@@ -29,19 +29,17 @@ const createFetchErrorAction = (result: string): FetchErrorAction => ({
     result: create<Error<string>>({ success: false, value: result })
 });
 type FetchResponseAction = FetchSuccessAction | FetchErrorAction;
-type Action = FetchAction | FetchResponseAction | { type: ActionTypes.Test } | { type: ActionTypes.RunConstant } | RunConstantDoneAction;
+type Action = FetchAction | FetchResponseAction | { type: ActionTypes.Test } | { type: ActionTypes.RunTask } | RunTaskDoneAction;
 
-const decodeGifUrl = (response: any): string => response.data.image_url;
-
-const getRandomGif = (topic: string): Cmd<string, string, FetchResponseAction> => {
-    const url = "https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=" + topic;
-    // Msg generic can't be inferred, unlike Elm?
-    return performTask<string, string, FetchResponseAction>(
-        createFetchErrorAction,
-        createFetchSuccessAction,
-        httpGet(decodeGifUrl, url)
-    )
+enum TaskTypes { GetRandomGif, RunTask }
+type GetRandomGifTask = {
+    type: TaskTypes.GetRandomGif,
+    topic: string,
+    onFail: (x: string) => FetchErrorAction,
+    onSuccess: (a: string) => FetchSuccessAction,
 }
+type RunTaskTask = { type: TaskTypes.RunTask }
+type Task = GetRandomGifTask | RunTaskTask
 
 type MainState = {
     status: 'not started' | 'pending' | 'success' | 'error',
@@ -52,18 +50,27 @@ type State = {
     main: MainState
 };
 const patch = <O, P>(o: O, p: P): O & P => Object.assign({}, o, p);
-const reducer = (state: MainState, action: Action): [MainState, Option<Cmd<any, any, Action>>] => {
+const reducer = (state: MainState, action: Action): [MainState, Option<Task[]>] => {
     switch (action.type) {
         case ActionTypes.Fetch:
-            return [patch(state, { status: 'pending', result: None }), new Some(getRandomGif('food'))];
+            return [patch(state, { status: 'pending', result: None }), new Some([
+                create<GetRandomGifTask>({
+                    type: TaskTypes.GetRandomGif,
+                    topic: 'food',
+                    onFail: x => createFetchErrorAction(x),
+                    onSuccess: a => createFetchSuccessAction(a),
+                })
+            ])];
         case ActionTypes.FetchSuccess:
             return [patch(state, { status: 'success', result: new Some(action.result) }), None]
         case ActionTypes.FetchError:
             return [patch(state, { status: 'error', result: new Some(action.result) }), None]
 
-        case ActionTypes.RunConstant:
-            return [state, new Some(Cmd.constant(createRunConstantDoneAction()))]
-        case ActionTypes.RunConstantDone:
+        case ActionTypes.RunTask:
+            return [state, new Some([
+                create<RunTaskTask>({ type: TaskTypes.RunTask })
+            ])]
+        case ActionTypes.RunTaskDone:
             return [patch(state, { constantRan: true }), None]
         default:
             return [state, None];
@@ -78,19 +85,36 @@ const initialState: State = {
     }
 };
 
-const myTaskRunner: TaskRunner = <X, A>(task: Task<X, A>): Promise<TaskResult<X, A>> => {
-    if (task.type === 'fetch') {
-        return fetch(task.url, task.fetchOptions)
-            .then(response => response.json())
-            .then(task.decoder)
-            .then(createTaskSuccess)
-            .catch(createTaskError)
-    } else {
-        throw new Error('Missing handler');
+enum EffectTypes { Fetch }
+type FetchEffect<Value> = {
+    type: EffectTypes.Fetch,
+    url: string,
+    fetchOptions?: RequestInit,
+    decoder: (x: any) => Value
+}
+
+const createGifUrl = (topic: string): string => `https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=${topic}`;
+const decodeGifUrl = (response: any): string => response.data.image_url;
+const myTaskRunner: TaskRunner<Action> = <X, A>(task: Task): Promise<Action> => {
+    switch (task.type) {
+        case TaskTypes.GetRandomGif:
+            const url = createGifUrl(task.topic);
+            return fetch(url)
+                .then(response => response.json())
+                .then(decodeGifUrl)
+                .then(createTaskSuccess)
+                .catch(createTaskError)
+                .then(result => (
+                    result.success
+                        ? task.onFail(result.value)
+                        : task.onSuccess(result.value)
+                ))
+        case TaskTypes.RunTask:
+            return Promise.resolve(createRunTaskDoneAction())
     }
 }
 
-const store = enhancedCreateStore(myTaskRunner, combineReducers<State>({ main: reducer }), initialState);
+const store = enhancedCreateStore(myTaskRunner, combineReducers<State, Task>({ main: reducer }), initialState);
 
 const rootEl = document.getElementById('root');
 store.subscribe(() => {
@@ -110,5 +134,5 @@ Constant ran: ${state.main.constantRan}
 
 store.dispatch({ type: ActionTypes.Fetch });
 setTimeout(() => {
-    store.dispatch({ type: ActionTypes.RunConstant });
+    store.dispatch({ type: ActionTypes.RunTask });
 }, 1000)
