@@ -1,5 +1,5 @@
 import {Option,Some,None} from 'monapt';
-import enhance, {combineReducers, Cmd, performTask, httpGet} from './enhancer';
+import enhance, {combineReducers, Cmd, performTask, httpGet, TaskRunner, Task, TaskResult, createTaskSuccess, createTaskError} from './enhancer';
 import {createStore} from 'redux';
 
 // createStore(reducer, install())
@@ -29,12 +29,11 @@ type Action = FetchAction | FetchResponseAction | { type: ActionTypes.Test };
 
 const decodeGifUrl = (response: any): string => response.data.image_url;
 
-const getRandomGif = (topic: string): Cmd<FetchResponseAction> => {
+const getRandomGif = (topic: string): Cmd<string, string, FetchResponseAction> => {
     const url = "https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=" + topic;
     // Msg generic can't be inferred, unlike Elm?
     return performTask<string, string, FetchResponseAction>(
         createFetchErrorAction,
-        // createFetchErrorAction,
         createFetchSuccessAction,
         httpGet(decodeGifUrl, url)
     )
@@ -47,7 +46,7 @@ type MainState = {
 type State = {
     main: MainState
 };
-const reducer = (state: MainState, action: Action): [MainState, Option<Cmd<Action>>] => {
+const reducer = (state: MainState, action: Action): [MainState, Option<Cmd<any, any, Action>>] => {
     switch (action.type) {
         case ActionTypes.Fetch:
             return [{ status: 'pending', result: None }, new Some(getRandomGif('food'))];
@@ -67,7 +66,19 @@ const initialState: State = {
     }
 };
 
-const store = enhancedCreateStore(combineReducers<State>({ main: reducer }), initialState);
+const myTaskRunner: TaskRunner = <X, A>(task: Task<X, A>): Promise<TaskResult<X, A>> => {
+    if (task.type === 'fetch') {
+        return fetch(task.url, task.fetchOptions)
+            .then(response => response.json())
+            .then(task.decoder)
+            .then(createTaskSuccess)
+            .catch(createTaskError)
+    } else {
+        throw new Error('Missing handler');
+    }
+}
+
+const store = enhancedCreateStore(myTaskRunner, combineReducers<State>({ main: reducer }), initialState);
 
 const rootEl = document.getElementById('root');
 store.subscribe(() => {
