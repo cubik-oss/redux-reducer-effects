@@ -12,7 +12,11 @@ export type Error<X> = { success: false; value: X }
 
 type Result<X, A> = Error<X> | Success<A>;
 
-enum ActionTypes { Fetch, FetchSuccess, FetchError, Test };
+enum ActionTypes { Fetch, FetchSuccess, FetchError, Test, RunConstant, RunConstantDone };
+type RunConstantDoneAction = { type: ActionTypes.RunConstantDone };
+const createRunConstantDoneAction = (): RunConstantDoneAction => (
+    { type: ActionTypes.RunConstantDone }
+)
 type FetchAction = { type: ActionTypes.Fetch };
 type FetchSuccessAction = { type: ActionTypes.FetchSuccess, result: Result<string, string> };
 const createFetchSuccessAction = (result: string): FetchSuccessAction => ({
@@ -25,7 +29,7 @@ const createFetchErrorAction = (result: string): FetchErrorAction => ({
     result: create<Error<string>>({ success: false, value: result })
 });
 type FetchResponseAction = FetchSuccessAction | FetchErrorAction;
-type Action = FetchAction | FetchResponseAction | { type: ActionTypes.Test };
+type Action = FetchAction | FetchResponseAction | { type: ActionTypes.Test } | { type: ActionTypes.RunConstant } | RunConstantDoneAction;
 
 const decodeGifUrl = (response: any): string => response.data.image_url;
 
@@ -41,19 +45,26 @@ const getRandomGif = (topic: string): Cmd<string, string, FetchResponseAction> =
 
 type MainState = {
     status: 'not started' | 'pending' | 'success' | 'error',
-    result: Option<Result<string, string>>
+    result: Option<Result<string, string>>,
+    constantRan: boolean
 }
 type State = {
     main: MainState
 };
+const patch = <O, P>(o: O, p: P): O & P => Object.assign({}, o, p);
 const reducer = (state: MainState, action: Action): [MainState, Option<Cmd<any, any, Action>>] => {
     switch (action.type) {
         case ActionTypes.Fetch:
-            return [{ status: 'pending', result: None }, new Some(getRandomGif('food'))];
+            return [patch(state, { status: 'pending', result: None }), new Some(getRandomGif('food'))];
         case ActionTypes.FetchSuccess:
-            return [{ status: 'success', result: new Some(action.result) }, None]
+            return [patch(state, { status: 'success', result: new Some(action.result) }), None]
         case ActionTypes.FetchError:
-            return [{ status: 'error', result: new Some(action.result) }, None]
+            return [patch(state, { status: 'error', result: new Some(action.result) }), None]
+
+        case ActionTypes.RunConstant:
+            return [state, new Some(Cmd.constant(createRunConstantDoneAction()))]
+        case ActionTypes.RunConstantDone:
+            return [patch(state, { constantRan: true }), None]
         default:
             return [state, None];
     }
@@ -62,7 +73,8 @@ const reducer = (state: MainState, action: Action): [MainState, Option<Cmd<any, 
 const initialState: State = {
     main: {
         status: 'not started',
-        result: None
+        result: None,
+        constantRan: false,
     }
 };
 
@@ -92,7 +104,11 @@ Result success: ${state.main.result
 Result success value/failure reason: ${state.main.result
     .map(result => result.success ? JSON.stringify(result.value, null, '\t') : result.value)
     .getOrElse(() => '')}
+Constant ran: ${state.main.constantRan}
 </pre>`;
 });
 
 store.dispatch({ type: ActionTypes.Fetch });
+setTimeout(() => {
+    store.dispatch({ type: ActionTypes.RunConstant });
+}, 1000)

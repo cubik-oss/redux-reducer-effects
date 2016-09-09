@@ -12,7 +12,7 @@ import {flattenDeep as flattenDeepArrays} from 'lodash';
 
 // https://github.com/elm-lang/core/blob/568b384720995ce35b9561fab89f2c0b63c2c3fc/src/Task.elm#L275
 // https://github.com/elm-lang/core/blob/568b384720995ce35b9561fab89f2c0b63c2c3fc/src/Platform/Cmd.elm
-enum CmdTypes { Single, Batch };
+enum CmdTypes { Single, Batch, Constant };
 export type SingleCmd<X, A, Msg> = {
     type: CmdTypes.Single
     onFail: (x: X) => Msg,
@@ -23,10 +23,17 @@ type BatchCmd<Msg> = {
     type: CmdTypes.Batch
     cmds: Cmd<any, any, Msg>[]
 };
-export type Cmd<X, A, Msg> = BatchCmd<Msg> | SingleCmd<X, A, Msg>
+type Constant<Msg> = {
+    type: CmdTypes.Constant
+    msg: Msg
+};
+export type Cmd<X, A, Msg> = BatchCmd<Msg> | SingleCmd<X, A, Msg> | Constant<Msg>
 export const Cmd = {
     batch: <Msg>(cmds: Cmd<any, any, Msg>[]): BatchCmd<Msg> => (
         { type: CmdTypes.Batch, cmds }
+    ),
+    constant: <Msg>(msg: Msg): Constant<Msg> => (
+        { type: CmdTypes.Constant, msg }
     )
 }
 
@@ -84,6 +91,8 @@ function cmdRunner <Msg>(taskRunner: TaskRunner, cmd: Cmd<any, any, Msg>): Promi
         case CmdTypes.Batch:
             return Promise.all(cmd.cmds.map(cmd2 => cmdRunner(taskRunner, cmd2)))
                 .then(flattenDeepArrays);
+        case CmdTypes.Constant:
+            return Promise.resolve(cmd.msg);
     }
 }
 
