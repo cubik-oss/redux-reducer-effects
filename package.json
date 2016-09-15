@@ -9,12 +9,12 @@
     "clean": "rm -rf ./target ./target-typescript",
     "compile": "npm run clean && npm run tslint && npm run compileTypescript && npm run compileBrowserify && npm run copyHtml"
   },
-  "main": "./target-typescript/enhancer.js",
+  "main": "src/redux-reducer-effects.ts",
   "dependencies": {
+    "@types/redux": "^3.5.29",
     "monapt": "^0.5.4"
   },
   "devDependencies": {
-    "@types/redux": "^3.5.29",
     "@types/whatwg-fetch": "0.0.30",
     "browserify": "^13.1.0",
     "redux": "^3.6.0",
