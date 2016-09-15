@@ -1,5 +1,5 @@
 import {Option,Some,None} from 'monapt';
-import enhance, {combineReducers, TaskRunner} from './enhancer';
+import enhance, {combineReducers, TaskRunner} from './redux-reducer-effects';
 import {createStore} from 'redux';
 
 const enhancedCreateStore = enhance(createStore);

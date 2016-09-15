@@ -1,6 +1,5 @@
 import {flatten as flattenOptions, Some, Option} from 'monapt';
 import {StoreEnhancer, StoreCreator, Reducer, Action} from 'redux';
-import {flatten as flattenArrays} from 'lodash';
 
 type EnhancedReducer<State, Task> = <Msg>(state: State, msg: Msg) => [State, Option<Task[]>];
 type EnhancedReducersMapObject<Task> = {
@@ -77,7 +76,7 @@ export const combineReducers = <S, Task>(reducerMap: EnhancedReducersMapObject<T
             hasChanged: false
         });
 
-        const tasks: Task[] = flattenArrays(flattenOptions(model.tasks));
+        const tasks = (<Task[]>[]).concat(...(flattenOptions(model.tasks)));
         return [model.state, new Some(tasks)];
     };
 }
