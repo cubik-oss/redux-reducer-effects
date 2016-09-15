@@ -1,7 +1,8 @@
-import { composeReducers } from "./redux-reducer-effects";
+import { composeReducers, Result } from "./redux-reducer-effects";
 import { assert } from "chai";
 
 type Action = { type : string};
+type Task = { task: string };
 type State = {
   counter: number,
 };
@@ -40,7 +41,7 @@ describe("redux-reducer-effects", function() {
         }
       }
 
-      function incrementWithTask(s: State, action: Action) {
+      function incrementWithTask(s: State, action: Action): Result<State, Task> {
         return [{
           counter: s.counter + 1,
         }, stubTask()]

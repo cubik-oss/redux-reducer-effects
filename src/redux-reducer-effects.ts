@@ -10,6 +10,8 @@ type EnhancedReducersMapObject<Task> = {
     [key: string]: EnhancedReducer<any, Task>;
 }
 
+export type Result<State,Task> = State | [State,Task];
+
 type TaskCallback<T> = (task: T) => any
 
 const ensureArray = <T>(x: T | T[]) => x instanceof Array ? x : [x];
@@ -43,11 +45,13 @@ export type TaskRunner<Msg> = <Task>(task: Task) => Promise<Msg>;
 
 const enhance = (originalCreateStore: StoreCreator) => {
     return <S, Task, Msg extends Action>(taskRunner: TaskRunner<Msg>, reducer: EnhancedReducer<S, Task>, initialState: S, enhancer?: StoreEnhancer<S>) => {
+
         // This subject represents a stream of cmds coming from
         // the reducer
         const subject = createSubject<Task>();
         const liftedReducer = liftReducer(reducer, subject.onNext)
         const store = originalCreateStore(liftedReducer, initialState, enhancer)
+
         // Close the loop by running the command and dispatching to the
         // store
         subject
@@ -63,15 +67,16 @@ const enhance = (originalCreateStore: StoreCreator) => {
 }
 export default enhance;
 
+type Accumulator<S,Task> = {
+    state: S,
+    tasks: Task[],
+};
+
+
 type Dictionary<T> = { [index: string]: T; }
 export const combineReducers = <S, Task>(reducerMap: EnhancedReducersMapObject<Task>): EnhancedReducer<S, Task> => {
     return <Msg>(state: Dictionary<any>, msg: Msg): [S, Task[]] => {
-        type Accumulator = {
-            state: any,
-            tasks: Task[]
-        };
-
-        const model = Object.keys(reducerMap).reduce<Accumulator>((acc, key) => {
+        const model = Object.keys(reducerMap).reduce<Accumulator<any,Task>>((acc, key) => {
             const reducer = reducerMap[key];
 
             // We lose type safety here because state is a record
@@ -92,12 +97,7 @@ export const combineReducers = <S, Task>(reducerMap: EnhancedReducersMapObject<T
 
 export const composeReducers = <S, Task>(...reducers: EnhancedReducer<S, Task>[]): EnhancedReducer<S, Task> => {
   return <Msg>(state: S, msg: Msg): [S, Task[]] => {
-    type Accumulator = {
-        state: S,
-        tasks: Task[],
-    };
-
-    const model = reducers.reduce<Accumulator>((acc, reducer) => {
+    const model = reducers.reduce<Accumulator<S,Task>>((acc, reducer) => {
         const result = reducer(acc.state, msg);
 
         acc.state = getState(result);
