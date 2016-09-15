@@ -1,16 +1,28 @@
-import {flatten as flattenOptions, Some, Option} from 'monapt';
 import {StoreEnhancer, StoreCreator, Reducer, Action} from 'redux';
 
-type EnhancedReducer<State, Task> = <Msg>(state: State, msg: Msg) => [State, Option<Task[]>];
+type StateWithTasks<State,Task> = [State, Task | Task[]];
+
+const hasTasks = <S,T>(r: EnhancedReducerResult<S,T>): r is StateWithTasks<S,T> => r instanceof Array;
+
+type EnhancedReducerResult<State,Task> = State | StateWithTasks<State,Task>;
+type EnhancedReducer<State, Task> = <Msg>(state: State, msg: Msg) => EnhancedReducerResult<State,Task>;
 type EnhancedReducersMapObject<Task> = {
     [key: string]: EnhancedReducer<any, Task>;
 }
 
-const liftReducer = <Msg, S, Task>(reducer: EnhancedReducer<S, Task>, callback: (task: Task) => void): Reducer<S> => {
+type TaskCallback<T> = (task: T) => any
+
+const ensureArray = <T>(x: T | T[]) => x instanceof Array ? x : [x];
+
+const getState = <S,T>(r: EnhancedReducerResult<S,T>) => hasTasks(r) ? r[0] : r;
+const getTasks = <S,T>(r: EnhancedReducerResult<S,T>) => hasTasks(r) ? ensureArray(r[1]) : [];
+
+
+const liftReducer = <Msg, S, Task>(reducer: EnhancedReducer<S, Task>, callback: TaskCallback<Task>): Reducer<S> => {
     return (state: S, msg: Msg) => {
-        const [newState, maybeTasks] = reducer(state, msg);
-        maybeTasks.foreach(tasks => tasks.forEach(callback))
-        return newState;
+        const result = reducer(state, msg);
+        getTasks(result).forEach((t) => callback(t));
+        return getState(result);
     }
 }
 
@@ -53,30 +65,51 @@ export default enhance;
 
 type Dictionary<T> = { [index: string]: T; }
 export const combineReducers = <S, Task>(reducerMap: EnhancedReducersMapObject<Task>): EnhancedReducer<S, Task> => {
-    return <Msg>(state: Dictionary<any>, msg: Msg): [S, Option<Task[]>] => {
+    return <Msg>(state: Dictionary<any>, msg: Msg): [S, Task[]] => {
         type Accumulator = {
             state: any,
-            tasks: Option<Task[]>[]
-            hasChanged: boolean
+            tasks: Task[]
         };
+
         const model = Object.keys(reducerMap).reduce<Accumulator>((acc, key) => {
             const reducer = reducerMap[key];
+
             // We lose type safety here because state is a record
             const previousStateForKey = state[key];
-            const nextResultForKey = reducer(previousStateForKey, msg);
-            const [nextStateForKey, maybeTasks] = nextResultForKey;
+            const result = <EnhancedReducerResult<S,Task>>reducer(previousStateForKey, msg);
+            acc.state[key] = getState(result);
+            acc.tasks.push(...getTasks(result));
 
-            acc.hasChanged = acc.hasChanged || nextStateForKey !== previousStateForKey;
-            acc.state[key] = nextStateForKey;
-            acc.tasks.push(maybeTasks);
             return acc;
         }, {
             state: {},
             tasks: [],
-            hasChanged: false
         });
 
-        const tasks = (<Task[]>[]).concat(...(flattenOptions(model.tasks)));
-        return [model.state, new Some(tasks)];
+        return [model.state, model.tasks];
     };
 }
+
+export const composeReducers = <S, Task>(...reducers: EnhancedReducer<S, Task>[]): EnhancedReducer<S, Task> => {
+  return <Msg>(state: S, msg: Msg): [S, Task[]] => {
+    type Accumulator = {
+        state: S,
+        tasks: Task[],
+    };
+
+    const model = reducers.reduce<Accumulator>((acc, reducer) => {
+        const result = reducer(acc.state, msg);
+
+        acc.state = getState(result);
+        acc.tasks.push(...getTasks(result));
+
+        return acc;
+    }, {
+        state: state,
+        tasks: [],
+    });
+
+    return [model.state, model.tasks];
+  };
+}
+

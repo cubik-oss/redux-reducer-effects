@@ -4,20 +4,23 @@
   "scripts": {
     "compileTypescript": "mkdir -p ./target-typescript && tsc",
     "compileBrowserify": "mkdir -p ./target && browserify ./target-typescript/example.js --outfile ./target/example.js",
+    "test": "mocha  --compilers ts:ts-node/register `((test -z $WATCH) && :)` src/test.ts",
     "copyHtml": "cp ./src/index.html ./target/index.html",
     "tslint": "tslint --exclude 'node_modules/**' '**/*.ts'",
     "clean": "rm -rf ./target ./target-typescript",
     "compile": "npm run clean && npm run tslint && npm run compileTypescript && npm run compileBrowserify && npm run copyHtml"
   },
   "main": "src/redux-reducer-effects.ts",
-  "dependencies": {
-    "@types/redux": "^3.5.29",
-    "monapt": "^0.5.4"
-  },
   "devDependencies": {
+    "@types/redux": "^3.5.29",
+    "@types/chai": "^3.4.32",
+    "@types/mocha": "^2.2.31",
     "@types/whatwg-fetch": "0.0.30",
     "browserify": "^13.1.0",
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2",
     "redux": "^3.6.0",
+    "ts-node": "^1.3.0",
     "tslint": "^3.15.1",
     "typescript": "^2.0.2",
     "typings": "^1.3.3"
