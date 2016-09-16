@@ -23,6 +23,11 @@ const getTasks = <S,T>(r: EnhancedReducerResult<S,T>) => hasTasks(r) ? ensureArr
 const liftReducer = <Msg, S, Task>(reducer: EnhancedReducer<S, Task>, callback: TaskCallback<Task>): Reducer<S> => {
     return (state: S, msg: Msg) => {
         const result = reducer(state, msg);
+        if(!result) {
+          console.error("undefined returned from reducer", reducer);
+          throw Error(`undefined returned from reducer!`);
+        }
+
         getTasks(result).forEach((t) => callback(t));
         return getState(result);
     }
@@ -49,7 +54,13 @@ const enhance = (originalCreateStore: StoreCreator) => {
         // This subject represents a stream of cmds coming from
         // the reducer
         const subject = createSubject<Task>();
-        const liftedReducer = liftReducer(reducer, subject.onNext)
+        const liftedReducer = liftReducer(reducer, (task: Task) => {
+          if(task) {
+            subject.onNext(task);
+          } else {
+            throw Error(`undefined returned as task!`);
+          }
+        });
         const store = originalCreateStore(liftedReducer, initialState, enhancer)
 
         // Close the loop by running the command and dispatching to the
