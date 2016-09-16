@@ -10,7 +10,7 @@ type EnhancedReducersMapObject<Task> = {
     [key: string]: EnhancedReducer<any, Task>;
 }
 
-export type Result<State,Task> = State | [State,Task];
+export type Result<State,Task> = State | [State,Task | Task[]];
 
 type TaskCallback<T> = (task: T) => any
 
