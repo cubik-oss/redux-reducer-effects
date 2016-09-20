@@ -1,5 +1,6 @@
-import { composeReducers, Result } from "./redux-reducer-effects";
+import enhance, { composeReducers, EnhancedReducerResult } from "./redux-reducer-effects";
 import { assert } from "chai";
+import { createStore } from "redux";
 
 type Action = { type : string};
 type Task = { task: string };
@@ -41,7 +42,7 @@ describe("redux-reducer-effects", function() {
                 }
             }
 
-            function incrementWithTask(s: State, action: Action): Result<State, Task> {
+            function incrementWithTask(s: State, action: Action): EnhancedReducerResult<State, Task> {
                 return [{
                     counter: s.counter + 1,
                 }, stubTask()]

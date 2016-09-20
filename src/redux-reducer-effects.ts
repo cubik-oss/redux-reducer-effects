@@ -1,16 +1,15 @@
-import {StoreEnhancer, StoreCreator, Reducer, Action} from 'redux';
+import {StoreEnhancer, StoreCreator, Store, Reducer, Action} from 'redux';
 
-type StateWithTasks<State,Task> = [State, Task | Task[]];
+export type StateWithTasks<State,Task> = [State, Task | Task[]];
 
 const hasTasks = <S,T>(r: EnhancedReducerResult<S,T>): r is StateWithTasks<S,T> => r instanceof Array;
 
-type EnhancedReducerResult<State,Task> = State | StateWithTasks<State,Task>;
-type EnhancedReducer<State, Task> = <Msg>(state: State, msg: Msg) => EnhancedReducerResult<State,Task>;
+export type EnhancedReducerResult<State,Task> = State | StateWithTasks<State,Task>;
+export type EnhancedReducer<State, Task> = <Msg>(state: State, msg: Msg) => EnhancedReducerResult<State,Task>;
+
 type EnhancedReducersMapObject<Task> = {
     [key: string]: EnhancedReducer<any, Task>;
 }
-
-export type Result<State,Task> = State | [State,Task | Task[]];
 
 type TaskCallback<T> = (task: T) => any
 

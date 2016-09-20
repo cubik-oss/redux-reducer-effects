@@ -1,6 +1,6 @@
 {
   "name": "redux-reducer-effects",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "scripts": {
     "compileTypescript": "mkdir -p ./target-typescript && tsc",
     "compileBrowserify": "mkdir -p ./target && browserify ./target-typescript/example.js --outfile ./target/example.js",
@@ -8,9 +8,12 @@
     "copyHtml": "cp ./src/index.html ./target/index.html",
     "tslint": "tslint --exclude 'node_modules/**' '**/*.ts'",
     "clean": "rm -rf ./target ./target-typescript",
+    "prepublish": "npm run -s clean && npm run compileTypescript",
     "compile": "npm run clean && npm run tslint && npm run compileTypescript && npm run compileBrowserify && npm run copyHtml"
   },
-  "main": "src/redux-reducer-effects.ts",
+  "typings": "target-typescript/redux-reducer-effects",
+  "main": "target-typescript/redux-reducer-effects",
+  "files": ["target-typesript"],
   "devDependencies": {
     "@types/redux": "^3.5.29",
     "@types/chai": "^3.4.32",
