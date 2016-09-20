@@ -13,7 +13,7 @@
   },
   "typings": "target-typescript/redux-reducer-effects",
   "main": "target-typescript/redux-reducer-effects",
-  "files": ["target-typesript"],
+  "files": ["target-typescript"],
   "devDependencies": {
     "@types/redux": "^3.5.29",
     "@types/chai": "^3.4.32",
