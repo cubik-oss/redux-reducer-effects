@@ -1,4 +1,9 @@
-import {StoreEnhancer, StoreCreator, Store, Reducer, Action} from 'redux';
+// Store is needed to export declarations, but unused as far as
+// tslint is concerned.
+// https://github.com/Microsoft/TypeScript/issues/6307#issuecomment-168321011
+/* tslint:disable:no-unused-variable */
+import {StoreEnhancer, StoreCreator, Reducer, Store, Action} from 'redux';
+/* tslint:enable:no-unused-variable */
 
 export type StateWithTasks<State,Task> = [State, Task | Task[]];
 

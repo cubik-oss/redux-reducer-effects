@@ -1,6 +1,5 @@
-import enhance, { composeReducers, EnhancedReducerResult } from "./redux-reducer-effects";
+import { composeReducers, EnhancedReducerResult } from "./redux-reducer-effects";
 import { assert } from "chai";
-import { createStore } from "redux";
 
 type Action = { type : string};
 type Task = { task: string };
@@ -15,7 +14,7 @@ describe("redux-reducer-effects", function() {
         it("keeps all state changes", function() {
             const combined = composeReducers(increment, increment, increment);
 
-            const [state, _ts] = <any>(combined({ counter: 0 }, { type: "init" }));
+            const [state] = <any>(combined({ counter: 0 }, { type: "init" }));
             assert(state, "expected final state");
             assert.equal(state.counter, 3);
 
