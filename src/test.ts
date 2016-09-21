@@ -48,12 +48,12 @@ describe("redux-reducer-effects", function() {
             }
         })
 
-            
+
     })
 
     describe("combine reducers", function() {
 
-            
+
     })
 })
 
