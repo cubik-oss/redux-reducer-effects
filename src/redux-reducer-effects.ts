@@ -62,13 +62,8 @@ const enhance = (options: EnhanceOptions) => (originalCreateStore: StoreCreator)
         // This subject represents a stream of cmds coming from
         // the reducer
         const subject = createSubject();
-        const liftedReducer = liftReducer(reducer, (task: Task) => {
-            if(task) {
-                subject.next(task);
-            } else {
-                throw Error(`undefined returned as task!`);
-            }
-        });
+        const liftedReducer = liftReducer(reducer, subject.next);
+
         const store = originalCreateStore(liftedReducer, initialState, enhancer)
 
         // Close the loop by running the command and dispatching to the
