@@ -16,7 +16,6 @@
         ]
     },
     "files": [
-        "./src/test.ts",
-        "./src/example.ts"
+        "./src/test.ts"
     ]
 }
