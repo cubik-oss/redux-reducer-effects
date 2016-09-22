@@ -1,7 +1,7 @@
 import enhance, { composeReducers, TaskRunner, EnhancedReducerResult, getState, getTasks } from "./redux-reducer-effects";
 import { assert } from "chai";
 import { createStore } from "redux";
-import { Subject, Observable } from "@reactivex/rxjs";
+import { Subject, Observable, Scheduler } from "@reactivex/rxjs";
 
 type Action = { type : string};
 type Task = { task: string };
@@ -19,7 +19,6 @@ describe("redux-reducer-effects", function() {
             const enhancerStack = enhance({
                 createSubject: () => new Subject<Task>(),
                 taskRunner,
-                scheduler: (fn) => setTimeout(fn)
             });
 
             const store = createStore<State>(<any>reducer, { counter: 0 }, enhancerStack);
@@ -44,8 +43,10 @@ describe("redux-reducer-effects", function() {
                 }
             }
 
-            function taskRunner(task: Task): Observable<Action> {
-              return Observable.from([{ type: "increment" }]);
+            function taskRunner(task$: Observable<Task>): Observable<Action> {
+              return task$
+                  .map(() => ({ type: "increment" }))
+                  .observeOn(Scheduler.async)
             }
 
 

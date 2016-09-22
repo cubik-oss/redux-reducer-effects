@@ -41,7 +41,7 @@ export interface Observable {
     subscribe(fn?: any, error?: (err:any) => void, complete?: () => void): any;
 }
 
-export interface Subject<T> {
+export interface Subject<T> extends Observable {
     next(t: T): void;
     flatMap(...xs: any[]): any;
 }
@@ -49,15 +49,14 @@ export interface Subject<T> {
 export interface EnhanceOptions {
     createSubject(): Subject<any>
     taskRunner: TaskRunner,
-    scheduler?: (fn: () => void) => void;
 };
 
-export type TaskRunner = <Task>(task: Task) => Observable;
+export type TaskRunner = <Task>(task$: Observable) => Observable;
 
 const synchronous = (f: Function) => f();
 
 const enhance = (options: EnhanceOptions) => (originalCreateStore: StoreCreator) => {
-    const { scheduler = synchronous, createSubject, taskRunner } = options;
+    const { createSubject, taskRunner } = options;
     return <S, Task>(reducer: EnhancedReducer<S, Task>, initialState: S, enhancer?: StoreEnhancer<S>) => {
 
         // This subject represents a stream of cmds coming from
@@ -74,13 +73,8 @@ const enhance = (options: EnhanceOptions) => (originalCreateStore: StoreCreator)
 
         // Close the loop by running the command and dispatching to the
         // store
-        subject
-            .flatMap(taskRunner)
-            .subscribe((t: Action) => {
-                scheduler(() => {
-                    store.dispatch(t);
-                });
-            });
+        taskRunner(subject)
+            .subscribe(store.dispatch);
 
         return store;
     }
