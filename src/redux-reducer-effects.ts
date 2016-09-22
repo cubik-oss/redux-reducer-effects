@@ -62,14 +62,18 @@ const enhance = (options: EnhanceOptions) => (originalCreateStore: StoreCreator)
         // This subject represents a stream of cmds coming from
         // the reducer
         const subject = createSubject();
-        const liftedReducer = liftReducer(reducer, (t: Task) => subject.next(t));
+        const liftedReducer = liftReducer(reducer, (t: Task) => 
+          subject.next(t)
+        );
 
         const store = originalCreateStore(liftedReducer, initialState, enhancer)
 
         // Close the loop by running the command and dispatching to the
         // store
         taskRunner(subject)
-            .subscribe(store.dispatch);
+            .subscribe((action: any) => 
+              store.dispatch(action)
+            );
 
         return store;
     }
