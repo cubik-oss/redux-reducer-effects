@@ -4,7 +4,7 @@
   "scripts": {
     "compileTypescript": "mkdir -p ./target-typescript && tsc",
     "compileBrowserify": "mkdir -p ./target && browserify ./target-typescript/example.js --outfile ./target/example.js",
-    "test": "mocha  --compilers ts:ts-node/register `((test -z $WATCH) && :)` src/test.ts",
+    "test": "mocha  --compilers ts:ts-node/register `((test -z $WATCH) && :) || echo '-w'` src/test.ts",
     "copyHtml": "cp ./src/index.html ./target/index.html",
     "tslint": "tslint --exclude 'node_modules/**' '**/*.ts'",
     "clean": "rm -rf ./target ./target-typescript",
@@ -17,9 +17,10 @@
     "target-typescript"
   ],
   "devDependencies": {
-    "@types/redux": "^3.5.29",
+    "@reactivex/rxjs": "^5.0.0-beta.12",
     "@types/chai": "^3.4.32",
     "@types/mocha": "^2.2.31",
+    "@types/redux": "^3.5.29",
     "@types/whatwg-fetch": "0.0.30",
     "browserify": "^13.1.0",
     "chai": "^3.5.0",

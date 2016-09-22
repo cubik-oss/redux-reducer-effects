@@ -1,5 +1,7 @@
-import { composeReducers, EnhancedReducerResult, getState, getTasks } from "./redux-reducer-effects";
+import enhance, { composeReducers, TaskRunner, EnhancedReducerResult, getState, getTasks } from "./redux-reducer-effects";
 import { assert } from "chai";
+import { createStore } from "redux";
+import { Subject, Observable } from "@reactivex/rxjs";
 
 type Action = { type : string};
 type Task = { task: string };
@@ -8,6 +10,48 @@ type State = {
 };
 
 describe("redux-reducer-effects", function() {
+
+    describe("enhance store", function() {
+
+        it("can create", function() {
+
+
+            const enhancerStack = enhance({
+                createSubject: () => new Subject<Task>(),
+                taskRunner,
+                scheduler: (fn) => setTimeout(fn)
+            });
+
+            const store = createStore<State>(<any>reducer, { counter: 0 }, enhancerStack);
+
+            store.dispatch({ type: "asyncInc" });
+
+            return wait(5)
+              .then(() => {
+                  assert.deepEqual(store.getState(), { counter: 1 });
+              })
+
+            function reducer(state: State, action: Action): EnhancedReducerResult<State,Task> {
+                switch(action.type) {
+                    case "asyncInc":
+                        return [state, { task: "asyncInc" }];
+
+                    case "increment":
+                        return { counter: state.counter + 1 };
+
+                    default:
+                        return state;
+                }
+            }
+
+            function taskRunner(task: Task): Observable<Action> {
+              return Observable.from([{ type: "increment" }]);
+            }
+
+
+        })
+
+    })
 
     describe("compose reducers", function() {
 
@@ -60,3 +104,7 @@ describe("redux-reducer-effects", function() {
     })
 })
 
+
+function wait(n: number) {
+  return new Promise(resolve => setTimeout(resolve, n));
+}
