@@ -37,32 +37,37 @@ const liftReducer = <Msg, S, Task>(reducer: EnhancedReducer<S, Task>, callback: 
     }
 }
 
-function createSubject <T>() {
-    type Subscriber = (t: T) => any;
-    const subscribers: Subscriber[] = [];
-    const subscribe = (subscriber: Subscriber) => subscribers.push(subscriber)
-    const onNext = (t: T) => subscribers.forEach(fn => fn(t));
-    const map = <A>(mapper: (t: T) => A) => {
-        const newSubject = createSubject<A>();
-        subscribe(t => newSubject.onNext(mapper(t)))
-        return newSubject;
-    }
-    return { onNext, subscribe, map }
+export interface Observable {
+    subscribe(fn?: any, error?: (err:any) => void, complete?: () => void): any;
 }
 
-export type TaskRunner<Msg> = <Task>(task: Task) => Promise<Msg>;
+export interface Subject<T> {
+    next(t: T): void;
+    flatMap(...xs: any[]): any;
+}
 
-const enhance = (originalCreateStore: StoreCreator) => {
-    return <S, Task, Msg extends Action>(taskRunner: TaskRunner<Msg>, reducer: EnhancedReducer<S, Task>, initialState: S, enhancer?: StoreEnhancer<S>) => {
+export interface EnhanceOptions {
+    createSubject(): Subject<any>
+    taskRunner: TaskRunner,
+    scheduler?: (fn: () => void) => void;
+};
+
+export type TaskRunner = <Task>(task: Task) => Observable;
+
+const synchronous = (f: Function) => f();
+
+const enhance = (options: EnhanceOptions) => (originalCreateStore: StoreCreator) => {
+    const { scheduler = synchronous, createSubject, taskRunner } = options;
+    return <S, Task>(reducer: EnhancedReducer<S, Task>, initialState: S, enhancer?: StoreEnhancer<S>) => {
 
         // This subject represents a stream of cmds coming from
         // the reducer
-        const subject = createSubject<Task>();
+        const subject = createSubject();
         const liftedReducer = liftReducer(reducer, (task: Task) => {
           if(task) {
-            subject.onNext(task);
+              subject.next(task);
           } else {
-            throw Error(`undefined returned as task!`);
+              throw Error(`undefined returned as task!`);
           }
         });
         const store = originalCreateStore(liftedReducer, initialState, enhancer)
@@ -70,16 +75,17 @@ const enhance = (originalCreateStore: StoreCreator) => {
         // Close the loop by running the command and dispatching to the
         // store
         subject
-            .map(taskRunner)
-            .subscribe(msgPromise => (
-                msgPromise.then(msg => {
-                    store.dispatch(msg)
-                })
-            ))
+            .flatMap(taskRunner)
+            .subscribe((t: Action) => {
+                scheduler(() => {
+                    store.dispatch(t);
+                });
+            });
 
         return store;
     }
 }
+
 export default enhance;
 
 type Accumulator<S,Task> = {
