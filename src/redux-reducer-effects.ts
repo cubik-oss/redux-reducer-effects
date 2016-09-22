@@ -62,7 +62,7 @@ const enhance = (options: EnhanceOptions) => (originalCreateStore: StoreCreator)
         // This subject represents a stream of cmds coming from
         // the reducer
         const subject = createSubject();
-        const liftedReducer = liftReducer(reducer, subject.next);
+        const liftedReducer = liftReducer(reducer, (t: Task) => subject.next(t));
 
         const store = originalCreateStore(liftedReducer, initialState, enhancer)
 
