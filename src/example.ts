@@ -6,9 +6,9 @@ const enhancedCreateStore = enhance(createStore);
 const create = <T>(t: T): T => t;
 
 export type Success<A> = { success: true; value: A; }
-export type Error<X> = { success: false; value: X }
-export type Result<X, A> = Error<X> | Success<A>;
-export const createError = <X>(x: X): Error<X> => ({ success: false, value: x })
+export type Failure<X> = { success: false; value: X }
+export type Result<X, A> = Failure<X> | Success<A>;
+export const createFailure = <X>(x: X): Failure<X> => ({ success: false, value: x })
 export const createSuccess = <A>(a: A): Success<A> => ({ success: true, value: a })
 
 enum ActionTypes { Fetch, FetchSuccess, FetchError };
@@ -18,8 +18,8 @@ const createFetchSuccessAction = (result: Success<string>): FetchSuccessAction =
     type: ActionTypes.FetchSuccess,
     result
 });
-type FetchErrorAction = { type: ActionTypes.FetchError, result: Error<string> };
-const createFetchErrorAction = (result: Error<string>): FetchErrorAction => ({
+type FetchErrorAction = { type: ActionTypes.FetchError, result: Failure<string> };
+const createFetchErrorAction = (result: Failure<string>): FetchErrorAction => ({
     type: ActionTypes.FetchError,
     result
 });
@@ -28,7 +28,7 @@ type Action = FetchAction | FetchSuccessAction | FetchErrorAction;
 type GetRandomGifTask = {
     type: 'GetRandomGif',
     topic: string,
-    onFail: (x: Error<string>) => FetchErrorAction,
+    onFail: (x: Failure<string>) => FetchErrorAction,
     onSuccess: (a: Success<string>) => FetchSuccessAction,
 }
 type Task = GetRandomGifTask;
@@ -80,7 +80,7 @@ const myTaskRunner: TaskRunner<Action> = <X, A>(task: Task): Promise<Action> => 
                 .then(response => response.json())
                 .then(decodeGifUrl)
                 .then(createSuccess)
-                .catch(createError)
+                .catch(createFailure)
                 .then(result => (
                     result.success
                         ? task.onSuccess(result)
