@@ -7,7 +7,9 @@ const create = <T>(t: T): T => t;
 
 export type Success<A> = { success: true; value: A; }
 export type Error<X> = { success: false; value: X }
-type Result<X, A> = Error<X> | Success<A>;
+export type Result<X, A> = Error<X> | Success<A>;
+export const createError = <X>(x: X): Error<X> => ({ success: false, value: x })
+export const createSuccess = <A>(a: A): Success<A> => ({ success: true, value: a })
 
 enum ActionTypes { Fetch, FetchSuccess, FetchError };
 type FetchAction = { type: ActionTypes.Fetch };
@@ -23,17 +25,11 @@ const createFetchErrorAction = (result: Error<string>): FetchErrorAction => ({
 });
 type Action = FetchAction | FetchSuccessAction | FetchErrorAction;
 
-type TaskError<X> = { success: false, value: X }
-type TaskSuccess<A> = { success: true, value: A }
-
-export const createError = <X>(x: X): Error<X> => ({ success: false, value: x })
-export const createSuccess = <A>(a: A): Success<A> => ({ success: true, value: a })
-
 type GetRandomGifTask = {
     type: 'GetRandomGif',
     topic: string,
-    onFail: (x: TaskError<string>) => FetchErrorAction,
-    onSuccess: (a: TaskSuccess<string>) => FetchSuccessAction,
+    onFail: (x: Error<string>) => FetchErrorAction,
+    onSuccess: (a: Success<string>) => FetchSuccessAction,
 }
 type Task = GetRandomGifTask;
 
