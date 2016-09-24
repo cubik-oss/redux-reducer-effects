@@ -1,4 +1,3 @@
-import {Option,Some,None} from 'monapt';
 import enhance, {combineReducers, TaskRunner} from './redux-reducer-effects';
 import {createStore} from 'redux';
 
@@ -40,36 +39,35 @@ type Task = GetRandomGifTask;
 
 type MainState = {
     status: 'not started' | 'pending' | 'success' | 'error',
-    result: Option<Result<string, string>>
+    result?: Result<string, string>
 }
 type State = {
     main: MainState
 };
 const patch = <O, P>(o: O, p: P): O & P => Object.assign({}, o, p);
-const reducer = (state: MainState, action: Action): [MainState, Option<Task[]>] => {
+const reducer = (state: MainState, action: Action): [MainState, Task[]] => {
     switch (action.type) {
         case ActionTypes.Fetch:
-            return [patch(state, { status: 'pending', result: None }), new Some([
+            return [patch(state, { status: 'pending', result: undefined }), [
                 create<GetRandomGifTask>({
                     type: 'GetRandomGif',
                     topic: 'food',
                     onFail: createFetchErrorAction,
                     onSuccess: createFetchSuccessAction,
                 })
-            ])];
+            ]];
         case ActionTypes.FetchSuccess:
-            return [patch(state, { status: 'success', result: new Some(action.result) }), None]
+            return [patch(state, { status: 'success', result: action.result }), []]
         case ActionTypes.FetchError:
-            return [patch(state, { status: 'error', result: new Some(action.result) }), None]
+            return [patch(state, { status: 'error', result: action.result }), []]
         default:
-            return [state, None];
+            return [state, []];
     }
 }
 
 const initialState: State = {
     main: {
-        status: 'not started',
-        result: None
+        status: 'not started'
     }
 };
 
@@ -103,12 +101,12 @@ store.subscribe(() => {
     if (rootEl) rootEl.innerHTML = `
 <pre>
 Status: ${state.main.status}
-Result success: ${state.main.result
-    .map(result => result.success)
-    .getOrElse(() => false)}
-Result success value/failure reason: ${state.main.result
-    .map(result => result.success ? JSON.stringify(result.value, null, '\t') : result.value)
-    .getOrElse(() => '')}
+Result success: ${state.main.result !== undefined && state.main.result.success === true ? true : false}
+Result success value/failure reason: ${state.main.result !== undefined
+    ? state.main.result.success === true
+        ? JSON.stringify(state.main.result.value, null, '\t')
+        : state.main.result
+    : ''}
 </pre>`;
 });
 
