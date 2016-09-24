@@ -1,4 +1,4 @@
-import enhance, { composeReducers, TaskRunner, EnhancedReducerResult, getState, getTasks } from "./redux-reducer-effects";
+import enhance, { composeReducers, EnhancedReducerResult, getState, getTasks } from "./redux-reducer-effects";
 import { assert } from "chai";
 import { createStore } from "redux";
 import { Subject, Observable, Scheduler } from "@reactivex/rxjs";

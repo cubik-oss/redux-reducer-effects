@@ -53,8 +53,6 @@ export interface EnhanceOptions {
 
 export type TaskRunner = <Task>(task$: Observable) => Observable;
 
-const synchronous = (f: Function) => f();
-
 const enhance = (options: EnhanceOptions) => (originalCreateStore: StoreCreator) => {
     const { createSubject, taskRunner } = options;
     return <S, Task>(reducer: EnhancedReducer<S, Task>, initialState: S, enhancer?: StoreEnhancer<S>) => {
