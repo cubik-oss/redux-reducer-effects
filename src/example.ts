@@ -1,39 +1,36 @@
 import enhance, {combineReducers, TaskRunner} from './redux-reducer-effects';
 import {createStore} from 'redux';
 
-const enhancedCreateStore = enhance(createStore);
-
+// Helpers
 const create = <T>(t: T): T => t;
-
 export type Success<A> = { success: true; value: A; }
-export type Error<X> = { success: false; value: X }
-type Result<X, A> = Error<X> | Success<A>;
+export type Failure<X> = { success: false; value: X }
+export type Result<X, A> = Failure<X> | Success<A>;
+export const createFailure = <X>(x: X): Failure<X> => ({ success: false, value: x })
+export const createSuccess = <A>(a: A): Success<A> => ({ success: true, value: a })
 
+// Actions
 enum ActionTypes { Fetch, FetchSuccess, FetchError };
 type FetchAction = { type: ActionTypes.Fetch };
+const createFetchAction = (): FetchAction => ({ type: ActionTypes.Fetch })
 type FetchSuccessAction = { type: ActionTypes.FetchSuccess, result: Success<string> };
 const createFetchSuccessAction = (result: Success<string>): FetchSuccessAction => ({
     type: ActionTypes.FetchSuccess,
     result
 });
-type FetchErrorAction = { type: ActionTypes.FetchError, result: Error<string> };
-const createFetchErrorAction = (result: Error<string>): FetchErrorAction => ({
+type FetchErrorAction = { type: ActionTypes.FetchError, result: Failure<string> };
+const createFetchErrorAction = (result: Failure<string>): FetchErrorAction => ({
     type: ActionTypes.FetchError,
     result
 });
 type Action = FetchAction | FetchSuccessAction | FetchErrorAction;
 
-type TaskError<X> = { success: false, value: X }
-type TaskSuccess<A> = { success: true, value: A }
-
-export const createError = <X>(x: X): Error<X> => ({ success: false, value: x })
-export const createSuccess = <A>(a: A): Success<A> => ({ success: true, value: a })
-
+// Tasks
 type GetRandomGifTask = {
     type: 'GetRandomGif',
     topic: string,
-    onFail: (x: TaskError<string>) => FetchErrorAction,
-    onSuccess: (a: TaskSuccess<string>) => FetchSuccessAction,
+    onFail: (x: Failure<string>) => FetchErrorAction,
+    onSuccess: (a: Success<string>) => FetchSuccessAction,
 }
 type Task = GetRandomGifTask;
 
@@ -84,7 +81,7 @@ const myTaskRunner: TaskRunner<Action> = <X, A>(task: Task): Promise<Action> => 
                 .then(response => response.json())
                 .then(decodeGifUrl)
                 .then(createSuccess)
-                .catch(createError)
+                .catch(createFailure)
                 .then(result => (
                     result.success
                         ? task.onSuccess(result)
@@ -93,6 +90,7 @@ const myTaskRunner: TaskRunner<Action> = <X, A>(task: Task): Promise<Action> => 
     }
 }
 
+const enhancedCreateStore = enhance(createStore);
 const store = enhancedCreateStore(myTaskRunner, combineReducers<State, Task>({ main: reducer }), initialState);
 
 const rootEl = document.getElementById('root');
@@ -110,4 +108,4 @@ Result success value/failure reason: ${state.main.result !== undefined
 </pre>`;
 });
 
-store.dispatch({ type: ActionTypes.Fetch });
+store.dispatch(createFetchAction());
