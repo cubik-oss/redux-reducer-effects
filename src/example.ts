@@ -66,9 +66,6 @@ const initialState: State = {
 
 const createGifUrl = (topic: string): string => `https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=${topic}`;
 const decodeGifUrl = (response: any): string => response.data.image_url;
-// Callbacks must be on Task because otherwise we don't know their type
-// Is result of Task compaitable with callback? We only know this if
-// they are coupled
 const myTaskRunner: TaskRunner<Task, Action> = <X, A>(tasks$: Observable<Task>): Observable<Action> => {
     return tasks$
         .filter(task => task.type === 'GetRandomGif')
