@@ -1,4 +1,4 @@
-import enhance, {combineReducers, TaskRunner} from './redux-reducer-effects';
+import enhance, {TaskRunner} from './redux-reducer-effects';
 import {createStore} from 'redux';
 import { Subject, Observable } from "@reactivex/rxjs";
 
@@ -36,14 +36,11 @@ type GetRandomGifTask = {
 }
 type Task = GetRandomGifTask;
 
-type MainState = {
+type State = {
     status: 'not started' | 'pending' | 'success' | 'error',
     result?: Result<string, string>
 }
-type State = {
-    main: MainState
-};
-const reducer = (state: MainState, action: Action): [MainState, Task[]] => {
+const reducer = (state: State, action: Action): [State, Task[]] => {
     switch (action.type) {
         case ActionTypes.Fetch:
             return [patch(state, { status: 'pending', result: undefined }), [
@@ -64,9 +61,7 @@ const reducer = (state: MainState, action: Action): [MainState, Task[]] => {
 }
 
 const initialState: State = {
-    main: {
-        status: 'not started'
-    }
+    status: 'not started'
 };
 
 const createGifUrl = (topic: string): string => `https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=${topic}`;
@@ -95,19 +90,19 @@ const enhancedCreateStore = enhance({
     createSubject: () => new Subject<Task>(),
     taskRunner: myTaskRunner,
 })(createStore);
-const store = enhancedCreateStore(combineReducers<State, Task>({ main: reducer }), initialState);
+const store = enhancedCreateStore(reducer, initialState);
 
 const rootEl = document.getElementById('root');
 store.subscribe(() => {
     const state = store.getState();
     if (rootEl) rootEl.innerHTML = `
 <pre>
-Status: ${state.main.status}
-Result success: ${state.main.result !== undefined && state.main.result.success === true ? true : false}
-Result success value/failure reason: ${state.main.result !== undefined
-    ? state.main.result.success === true
-        ? JSON.stringify(state.main.result.value, null, '\t')
-        : state.main.result
+Status: ${state.status}
+Result success: ${state.result !== undefined ? state.result.success : ''}
+Result success value/failure reason: ${state.result !== undefined
+    ? state.result.success === true
+        ? JSON.stringify(state.result.value, null, '\t')
+        : state.result
     : ''}
 </pre>`;
 });
