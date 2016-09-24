@@ -1,6 +1,6 @@
 # redux-reducer-effects
 
-Redux enhancer which adds support for **managed effects** to the reducer.
+Redux enhancer which adds support for **managed effects** to the reducer, allowing you to return **side effects as data** in your reducer function.
 
 ## Reducer
 * **Pure** function as before, returning state *and tasks*
