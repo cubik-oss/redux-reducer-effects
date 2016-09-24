@@ -3,8 +3,14 @@ import { assert } from "chai";
 import { createStore } from "redux";
 import { Subject, Observable, Scheduler } from "@reactivex/rxjs";
 
-type Action = { type : string};
-type Task = { task: string };
+const create = <T>(t: T): T => t;
+
+type IncrementAction = { type: 'increment' };
+type AsyncIncrementAction = { type: 'asyncInc' };
+type Action = IncrementAction | AsyncIncrementAction;
+type AsyncIncrementTask = { task: 'asyncInc' };
+type StubTask = { task: 'do thing' };
+type Task = AsyncIncrementTask | StubTask;
 type State = {
     counter: number,
 };
@@ -21,7 +27,8 @@ describe("redux-reducer-effects", function() {
                 taskRunner,
             });
 
-            const store = createStore<State>(<any>reducer, { counter: 0 }, enhancerStack);
+            const enhancedCreateStore = enhancerStack(createStore);
+            const store = enhancedCreateStore(reducer, { counter: 0 }, enhancerStack);
 
             store.dispatch({ type: "asyncInc" });
 
@@ -45,7 +52,7 @@ describe("redux-reducer-effects", function() {
 
             function taskRunner(task$: Observable<Task>): Observable<Action> {
                 return task$
-                    .map(() => ({ type: "increment" }))
+                    .map(() => (create<IncrementAction>({ type: "increment" })))
                     .observeOn(Scheduler.async)
             }
 
@@ -73,7 +80,7 @@ describe("redux-reducer-effects", function() {
 
         it("combines tasks, from both states with and without new tasks", function() {
             const combined = composeReducers(increment, incrementWithTask, increment, incrementWithTask);
-            const stubTask = () => ({ task: "do thing" });
+            const stubTask = () => create<StubTask>({ task: "do thing" });
 
             const result = combined({ counter: 0 }, { type: "init" });
             const state = getState(result);
