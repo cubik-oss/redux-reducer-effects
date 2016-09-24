@@ -46,12 +46,12 @@ export interface Subject<T> extends Observable<T> {
     flatMap<R>(project: (value: T, index: number) => Observable<R>): Observable<R>;
 }
 
+export type TaskRunner<Task, Msg> = (task$: Observable<Task>) => Observable<Msg>;
+
 export interface EnhanceOptions<Task, Msg> {
     createSubject(): Subject<Task>
     taskRunner: TaskRunner<Task, Msg>,
 };
-
-export type TaskRunner<Task, Msg> = (task$: Observable<Task>) => Observable<Msg>;
 
 const enhance = <Task, Msg extends Action>(options: EnhanceOptions<Task, Msg>) => (originalCreateStore: StoreCreator) => {
     const { createSubject, taskRunner } = options;
