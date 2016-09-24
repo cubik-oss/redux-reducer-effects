@@ -13,6 +13,7 @@ export const createSuccess = <A>(a: A): Success<A> => ({ success: true, value: a
 
 enum ActionTypes { Fetch, FetchSuccess, FetchError };
 type FetchAction = { type: ActionTypes.Fetch };
+const createFetchAction = (): FetchAction => ({ type: ActionTypes.Fetch })
 type FetchSuccessAction = { type: ActionTypes.FetchSuccess, result: Success<string> };
 const createFetchSuccessAction = (result: Success<string>): FetchSuccessAction => ({
     type: ActionTypes.FetchSuccess,
@@ -106,4 +107,4 @@ Result success value/failure reason: ${state.main.result !== undefined
 </pre>`;
 });
 
-store.dispatch({ type: ActionTypes.Fetch });
+store.dispatch(createFetchAction());
