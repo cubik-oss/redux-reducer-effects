@@ -91,12 +91,10 @@ const myTaskRunner: TaskRunner<Task, Action> = <X, A>(tasks$: Observable<Task>):
         })
 };
 
-const enhancerStack = enhance({
+const enhancedCreateStore = enhance({
     createSubject: () => new Subject<Task>(),
     taskRunner: myTaskRunner,
-});
-
-const enhancedCreateStore = enhancerStack(createStore);
+})(createStore);
 const store = enhancedCreateStore(combineReducers<State, Task>({ main: reducer }), initialState);
 
 const rootEl = document.getElementById('root');
