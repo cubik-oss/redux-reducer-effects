@@ -75,6 +75,7 @@ const myTaskRunner: TaskRunner<Task, Action> = <X, A>(tasks$: Observable<Task>):
         .switchMap(task => {
             const url = createGifUrl(task.topic);
             return Observable.ajax({ url, crossDomain: true })
+                .map(response => response.response)
                 .map(decodeGifUrl)
                 .map(createSuccess)
                 .catch(error => Observable.of(createFailure(error)))
