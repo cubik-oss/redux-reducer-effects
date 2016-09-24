@@ -111,7 +111,7 @@ export const combineReducers = <S, Task>(reducerMap: EnhancedReducersMapObject<T
 }
 
 export const composeReducers = <S, Task>(...reducers: EnhancedReducer<S, Task>[]): EnhancedReducer<S, Task> => {
-  return <Msg>(state: S, msg: Msg): [S, Task[]] => {
+  return <Msg>(state: S, msg: Msg): EnhancedReducerResult<S, Task> => {
     const model = reducers.reduce<Accumulator<S,Task>>((acc, reducer) => {
         const result = reducer(acc.state, msg);
 
