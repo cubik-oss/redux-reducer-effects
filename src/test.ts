@@ -26,9 +26,9 @@ describe("redux-reducer-effects", function() {
             store.dispatch({ type: "asyncInc" });
 
             return wait(5)
-              .then(() => {
-                  assert.deepEqual(store.getState(), { counter: 1 });
-              })
+                .then(() => {
+                    assert.deepEqual(store.getState(), { counter: 1 });
+                })
 
             function reducer(state: State, action: Action): EnhancedReducerResult<State,Task> {
                 switch(action.type) {
@@ -44,9 +44,9 @@ describe("redux-reducer-effects", function() {
             }
 
             function taskRunner(task$: Observable<Task>): Observable<Action> {
-              return task$
-                  .map(() => ({ type: "increment" }))
-                  .observeOn(Scheduler.async)
+                return task$
+                    .map(() => ({ type: "increment" }))
+                    .observeOn(Scheduler.async)
             }
 
 
@@ -107,5 +107,5 @@ describe("redux-reducer-effects", function() {
 
 
 function wait(n: number) {
-  return new Promise(resolve => setTimeout(resolve, n));
+    return new Promise(resolve => setTimeout(resolve, n));
 }
