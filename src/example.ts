@@ -9,6 +9,7 @@ export type Failure<X> = { success: false; value: X }
 export type Result<X, A> = Failure<X> | Success<A>;
 export const createFailure = <X>(x: X): Failure<X> => ({ success: false, value: x })
 export const createSuccess = <A>(a: A): Success<A> => ({ success: true, value: a })
+const patch = <O, P>(o: O, p: P): O & P => Object.assign({}, o, p);
 
 // Actions
 enum ActionTypes { Fetch, FetchSuccess, FetchError };
@@ -42,7 +43,6 @@ type MainState = {
 type State = {
     main: MainState
 };
-const patch = <O, P>(o: O, p: P): O & P => Object.assign({}, o, p);
 const reducer = (state: MainState, action: Action): [MainState, Task[]] => {
     switch (action.type) {
         case ActionTypes.Fetch:
