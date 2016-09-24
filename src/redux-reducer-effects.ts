@@ -28,8 +28,8 @@ const liftReducer = <Msg, S, Task>(reducer: EnhancedReducer<S, Task>, callback: 
     return (state: S, msg: Msg) => {
         const result = reducer(state, msg);
         if(!result) {
-          console.error("undefined returned from reducer", reducer);
-          throw Error(`undefined returned from reducer!`);
+            console.error("undefined returned from reducer", reducer);
+            throw Error(`undefined returned from reducer!`);
         }
 
         getTasks(result).forEach((t) => callback(t));
@@ -59,11 +59,11 @@ const enhance = (originalCreateStore: StoreCreator) => {
         // the reducer
         const subject = createSubject<Task>();
         const liftedReducer = liftReducer(reducer, (task: Task) => {
-          if(task) {
-            subject.onNext(task);
-          } else {
-            throw Error(`undefined returned as task!`);
-          }
+            if(task) {
+                subject.onNext(task);
+            } else {
+              throw Error(`undefined returned as task!`);
+            }
         });
         const store = originalCreateStore(liftedReducer, initialState, enhancer)
 
@@ -111,20 +111,20 @@ export const combineReducers = <S, Task>(reducerMap: EnhancedReducersMapObject<T
 }
 
 export const composeReducers = <S, Task>(...reducers: EnhancedReducer<S, Task>[]): EnhancedReducer<S, Task> => {
-  return <Msg>(state: S, msg: Msg): EnhancedReducerResult<S, Task> => {
-    const model = reducers.reduce<Accumulator<S,Task>>((acc, reducer) => {
-        const result = reducer(acc.state, msg);
+    return <Msg>(state: S, msg: Msg): EnhancedReducerResult<S, Task> => {
+        const model = reducers.reduce<Accumulator<S,Task>>((acc, reducer) => {
+            const result = reducer(acc.state, msg);
 
-        acc.state = getState(result);
-        acc.tasks.push(...getTasks(result));
+            acc.state = getState(result);
+            acc.tasks.push(...getTasks(result));
 
-        return acc;
-    }, {
-        state: state,
-        tasks: [],
-    });
+            return acc;
+        }, {
+            state: state,
+            tasks: [],
+        });
 
-    return [model.state, model.tasks];
-  };
+        return [model.state, model.tasks];
+    };
 }
 
