@@ -11,6 +11,7 @@ export type Result<X, A> = Failure<X> | Success<A>;
 export const createFailure = <X>(x: X): Failure<X> => ({ success: false, value: x })
 export const createSuccess = <A>(a: A): Success<A> => ({ success: true, value: a })
 
+// Actions
 enum ActionTypes { Fetch, FetchSuccess, FetchError };
 type FetchAction = { type: ActionTypes.Fetch };
 const createFetchAction = (): FetchAction => ({ type: ActionTypes.Fetch })
@@ -26,6 +27,7 @@ const createFetchErrorAction = (result: Failure<string>): FetchErrorAction => ({
 });
 type Action = FetchAction | FetchSuccessAction | FetchErrorAction;
 
+// Tasks
 type GetRandomGifTask = {
     type: 'GetRandomGif',
     topic: string,
