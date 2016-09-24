@@ -1,10 +1,8 @@
 import enhance, {combineReducers, TaskRunner} from './redux-reducer-effects';
 import {createStore} from 'redux';
 
-const enhancedCreateStore = enhance(createStore);
-
+// Helpers
 const create = <T>(t: T): T => t;
-
 export type Success<A> = { success: true; value: A; }
 export type Failure<X> = { success: false; value: X }
 export type Result<X, A> = Failure<X> | Success<A>;
@@ -92,6 +90,7 @@ const myTaskRunner: TaskRunner<Action> = <X, A>(task: Task): Promise<Action> => 
     }
 }
 
+const enhancedCreateStore = enhance(createStore);
 const store = enhancedCreateStore(myTaskRunner, combineReducers<State, Task>({ main: reducer }), initialState);
 
 const rootEl = document.getElementById('root');
