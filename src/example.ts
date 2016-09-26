@@ -66,7 +66,7 @@ const initialState: State = {
 
 const createGifUrl = (topic: string): string => `https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=${topic}`;
 const decodeGifUrl = (response: any): string => response.data.image_url;
-const myTaskRunner: TaskRunner<Task, Action> = <X, A>(tasks$: Observable<Task>): Observable<Action> => {
+const myTaskRunner: TaskRunner<Task, Action> = (tasks$: Observable<Task>): Observable<Action> => {
     return tasks$
         .filter(task => task.type === 'GetRandomGif')
         .switchMap(task => {
