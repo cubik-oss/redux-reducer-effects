@@ -16,15 +16,13 @@ type EnhancedReducersMapObject<Task> = {
     [key: string]: EnhancedReducer<any, Task>;
 }
 
-type TaskCallback<T> = (task: T) => any
-
 const ensureArray = <T>(x: T | T[]) => x instanceof Array ? x : [x];
 
 export const getState = <S,T>(r: EnhancedReducerResult<S,T>) => hasTasks(r) ? r[0] : r;
 export const getTasks = <S,T>(r: EnhancedReducerResult<S,T>) => hasTasks(r) ? ensureArray(r[1]) : [];
 
 
-const liftReducer = <Msg, S, Task>(reducer: EnhancedReducer<S, Task>, callback: TaskCallback<Task>): Reducer<S> => {
+const liftReducer = <Msg, S, Task>(reducer: EnhancedReducer<S, Task>, handleTask: (task: Task) => any): Reducer<S> => {
     return (state: S, msg: Msg) => {
         const result = reducer(state, msg);
         if(!result) {
@@ -32,7 +30,7 @@ const liftReducer = <Msg, S, Task>(reducer: EnhancedReducer<S, Task>, callback: 
             throw Error(`undefined returned from reducer!`);
         }
 
-        getTasks(result).forEach((t) => callback(t));
+        getTasks(result).forEach((t) => handleTask(t));
         return getState(result);
     }
 }
