@@ -44,12 +44,12 @@ const reducer = (state: State, action: Action): [State, Task[]] => {
     switch (action.type) {
         case ActionTypes.Fetch:
             return [patch(state, { status: 'pending', result: undefined }), [
-                create<GetRandomGifTask>({
+                {
                     type: 'GetRandomGif',
                     topic: 'food',
                     onFail: createFetchErrorAction,
                     onSuccess: createFetchSuccessAction,
-                })
+                }
             ]];
         case ActionTypes.FetchSuccess:
             return [patch(state, { status: 'success', result: action.result }), []]
