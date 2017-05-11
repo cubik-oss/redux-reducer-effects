@@ -3,7 +3,6 @@ import {createStore} from 'redux';
 import { Subject, Observable } from "@reactivex/rxjs";
 
 // Helpers
-const create = <T>(t: T): T => t;
 export type Success<A> = { success: true; value: A; }
 export type Failure<X> = { success: false; value: X }
 export type Result<X, A> = Failure<X> | Success<A>;
