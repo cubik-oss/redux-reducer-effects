@@ -12,8 +12,8 @@ const hasTasks = <S,T>(r: EnhancedReducerResult<S,T>): r is StateWithTasks<S,T> 
 export type EnhancedReducerResult<State,Task> = State | StateWithTasks<State,Task>;
 export type EnhancedReducer<State, Task> = <Msg>(state: State, msg: Msg) => EnhancedReducerResult<State,Task>;
 
-type EnhancedReducersMapObject<Task> = {
-    [key: string]: EnhancedReducer<any, Task>;
+type EnhancedReducersMapObject<State, Task> = {
+    [key: string]: EnhancedReducer<State, Task>;
 }
 
 const ensureArray = <T>(x: T | T[]) => x instanceof Array ? x : [x];
@@ -79,7 +79,7 @@ type Accumulator<S,Task> = {
 
 
 type Dictionary<T> = { [index: string]: T; }
-export const combineReducers = <S, Task>(reducerMap: EnhancedReducersMapObject<Task>): EnhancedReducer<S, Task> => {
+export const combineReducers = <S, Task>(reducerMap: EnhancedReducersMapObject<S, Task>): EnhancedReducer<S, Task> => {
     return <Msg>(state: Dictionary<any>, msg: Msg): [S, Task[]] => {
         const model = Object.keys(reducerMap).reduce<Accumulator<any,Task>>((acc, key) => {
             const reducer = reducerMap[key];
