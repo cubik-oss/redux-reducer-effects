@@ -1,6 +1,6 @@
 {
   "name": "redux-reducer-effects",
-  "version": "2.0.2-beta",
+  "version": "2.0.3",
   "scripts": {
     "compileTypescript": "mkdir -p ./target-typescript && tsc",
     "compileBrowserify": "mkdir -p ./target && browserify ./target-typescript/example.js --outfile ./target/example.js",
